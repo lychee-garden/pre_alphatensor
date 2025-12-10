@@ -36,6 +36,7 @@ pip install --upgrade "jax[cuda]" \
   -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 """
+import os
 import subprocess
 
 import numpy as np
@@ -43,8 +44,8 @@ import numpy as np
 # https://github.com/google/jax/issues/9218
 import scipy.signal  # pylint: disable=unused-import
 
-from alphatensor.benchmarking import factorizations
-from alphatensor.benchmarking import utils
+import factorizations
+import utils
 
 
 def main():
@@ -54,11 +55,13 @@ def main():
     raise ValueError('To reproduce the results from the paper, please run on a'
                      'server with V100 GPU.')
   print('Fixing GPU clock frequency to 1530 to reduce benchmarking variance...')
+  # Check if running as root - if so, don't need sudo
+  sudo_prefix = [] if os.geteuid() == 0 else ['sudo']
   process = subprocess.Popen(
-      'sudo nvidia-smi -pm ENABLED -i 0'.split(' '), stdout=subprocess.PIPE)
+      sudo_prefix + 'nvidia-smi -pm ENABLED -i 0'.split(' '), stdout=subprocess.PIPE)
   output, _ = process.communicate()
   process = subprocess.Popen(
-      'sudo nvidia-smi --lock-gpu-clocks=1530,1530'.split(' '),
+      sudo_prefix + 'nvidia-smi --lock-gpu-clocks=1530,1530'.split(' '),
       stdout=subprocess.PIPE)
   output, _ = process.communicate()
   print('Done.')
